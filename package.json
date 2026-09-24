@@ -1,0 +1,14 @@
+{
+  "name": "stackbot-ai",
+  "version": "0.1.0",
+  "description": "AI-powered Telegram content and community management platform",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "dotenv": "^16.4.5"
+  }
+}
