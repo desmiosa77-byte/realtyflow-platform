@@ -123,14 +123,24 @@ app.post('/api/chat', async (req, res) => {
   const props = getProperties(tenantId);
 
   try {
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 300,
-      system: buildSystemPrompt(tenant, props),
-      messages: history.map(m => ({ role: m.role, content: m.content }))
-    });
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 300,
+          messages: [
+            { role: 'system', content: buildSystemPrompt(tenant, props) },
+            ...history.map(m => ({ role: m.role, content: m.content }))
+          ]
+        })
+      });
 
-    const replyText = response.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+      const groqData = await groqResponse.json();
+      const replyText = groqData.choices[0].message.content;
     db.prepare('INSERT INTO messages (lead_id, role, content) VALUES (?, ?, ?)').run(currentLeadId, 'assistant', replyText);
     db.prepare('UPDATE leads SET last_contacted_at = datetime(\'now\') WHERE id = ?').run(currentLeadId);
 
