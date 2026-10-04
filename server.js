@@ -121,6 +121,7 @@ app.post('/api/chat', async (req, res) => {
 
   const history = db.prepare('SELECT role, content FROM messages WHERE lead_id = ? ORDER BY id ASC').all(currentLeadId);
   const props = getProperties(tenantId);
+try{
 
       let replyText;
 try {
