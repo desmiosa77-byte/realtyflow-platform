@@ -122,23 +122,6 @@ app.post('/api/chat', async (req, res) => {
   const history = db.prepare('SELECT role, content FROM messages WHERE lead_id = ? ORDER BY id ASC').all(currentLeadId);
   const props = getProperties(tenantId);
 
-  try {
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          max_tokens: 300,
-          messages: [
-            { role: 'system', content: buildSystemPrompt(tenant, props) },
-            ...history.map(m => ({ role: m.role, content: m.content }))
-          ]
-        })
-      });
-
       let replyText;
 try {
   const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
