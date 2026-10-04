@@ -139,8 +139,33 @@ app.post('/api/chat', async (req, res) => {
         })
       });
 
-      const groqData = await groqResponse.json();
-      const replyText = groqData.choices[0].message.content;
+      let replyText;
+try {
+  const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      max_tokens: 300,
+      messages: [
+        { role: 'system', content: buildSystemPrompt(tenant, props) },
+        ...history.map(m => ({ role: m.role, content: m.content }))
+      ]
+    })
+  });
+  const groqData = await groqResponse.json();
+  if (!groqResponse.ok) {
+    console.error('GROQ ERROR', groqResponse.status, JSON.stringify(groqData));
+    throw new Error('groq failed');
+  }
+  replyText = groqData.choices[0].message.content;
+} catch (err) {
+  console.error('CHAT ERROR', err.message);
+  replyText = "Thanks for your message! Let me connect you with our agent on WhatsApp so you get a quick answer.";
+}
     db.prepare('INSERT INTO messages (lead_id, role, content) VALUES (?, ?, ?)').run(currentLeadId, 'assistant', replyText);
     db.prepare('UPDATE leads SET last_contacted_at = datetime(\'now\') WHERE id = ?').run(currentLeadId);
 
