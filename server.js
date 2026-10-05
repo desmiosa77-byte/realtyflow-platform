@@ -132,8 +132,9 @@ try {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 300,
+      model: 'openai/gpt-oss-120b',
+      max_tokens: 1000,
+      reasoning_effort: 'low',
       messages: [
         { role: 'system', content: buildSystemPrompt(tenant, props) },
         ...history.map(m => ({ role: m.role, content: m.content }))
