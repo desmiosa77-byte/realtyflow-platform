@@ -88,7 +88,7 @@
         localStorage.setItem(storageKey, leadId);
       }
 
-      addMessage('assistant', data.reply);
+      addMessage('assistant', data.reply || data.error || JSON.stringify(data));
       if (data.handoffMessage) {
         addMessage('assistant', data.handoffMessage);
       }
