@@ -20,7 +20,8 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // ---------- DATABASE ----------
-const db = new Database('realtyflow.db');
+const dbPath = fs.existsSync('/data') ? '/data/realtyflow.db' : 'realtyflow.db';
+const db = new Database(dbPath);
 db.exec(fs.readFileSync(path.join(process.cwd(), 'schema.sql'), 'utf-8'));
 
 // ---------- HELPERS ----------
