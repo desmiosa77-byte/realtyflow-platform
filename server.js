@@ -60,7 +60,7 @@ ${propertiesAsText(props)}`;
 
 // Lightweight keyword-based status classifier for the MVP.
 // (Upgrade path: replace with a small Claude classification call once volume justifies the cost.)
-const HOT_KEYWORDS = ['ready to buy', 'i want to buy', 'inspection', 'inspect', 'payment', 'pay now', 'send account', 'yes let\'s do', 'book a viewing', 'come and see'];
+const HOT_KEYWORDS = ['how do i pay', 'how can i pay', 'i will take it', 'account number','ready to buy', 'i want to buy', 'inspection', 'inspect', 'payment', 'pay now', 'send account', 'yes let\'s do', 'book a viewing', 'come and see'];
 const WARM_KEYWORDS = ['not now', 'no money', 'let me think', 'later', 'not sure', 'still deciding', 'budget is low', "can't afford"];
 
 function classifyStatus(userMessage) {
@@ -163,7 +163,7 @@ try {
         .run(classification.status, classification.reason, currentLeadId);
 
       if (classification.status === 'Hot') {
-        const waLink = `https://wa.me/${tenant.agent_whatsapp}`;
+        const waLink = `https://wa.me/${String(tenant.agent_whatsapp).replace(/\D/g,'')}`;
         handoffMessage = `Let's continue on WhatsApp — click here to chat with ${tenant.agent_name} directly: ${waLink}`;
         db.prepare('UPDATE leads SET handed_off = 1 WHERE id = ?').run(currentLeadId);
       }
