@@ -64,7 +64,17 @@
   function addMessage(role, text) {
     const div = document.createElement('div');
     div.className = `rf-msg rf-${role}`;
-    div.innerText = text;
+    div.style.whiteSpace = 'pre-wrap';
+String(text).split(/(https?:\/\/[^\s]+)/g).forEach(function (p) {
+  if (/^https?:\/\//.test(p)) {
+    const a = document.createElement('a');
+    a.href = p; a.textContent = p; a.target = '_blank'; a.rel = 'noopener';
+    a.style.color = 'inherit'; a.style.textDecoration = 'underline';
+    div.appendChild(a);
+  } else if (p) {
+    div.appendChild(document.createTextNode(p));
+  }
+});
     messagesEl.appendChild(div);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
