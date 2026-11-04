@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RealtyFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #f1f3f6; --card: #ffffff; --ink: #0f1b2d; --muted: #5b6b80; --line: #dde3ea;
+    --brand: #1f4fe0; --brand-soft: #e6edff;
+    --hot: #d9480f; --warm: #c98a00; --new: #5b6b80; --closed: #2b8a3e;
+    --radius: 12px;
+    --head: "Bricolage Grotesque", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: var(--body); background: var(--page); color: var(--ink); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+  h1, h2, h3 { font-family: var(--head); margin: 0; letter-spacing: -0.01em; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .hidden { display: none !important; }
+
+  /* Auth */
+  .auth { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+  .auth-box { width: 100%; max-width: 440px; }
+  .brand { font-family: var(--head); font-weight: 700; font-size: 1.5rem; color: var(--brand); margin-bottom: 4px; }
+  .auth h1 { font-size: 1.9rem; line-height: 1.15; margin: 14px 0 6px; }
+  .auth .sub { color: var(--muted); margin: 0 0 22px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  label { display: block; font-weight: 600; font-size: .92rem; margin: 14px 0 6px; }
+  label small { font-weight: 400; color: var(--muted); }
+  input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  textarea { min-height: 84px; resize: vertical; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 8px; padding: 12px 18px; font-weight: 600; background: var(--brand); color: #fff; }
+  .btn.block { width: 100%; margin-top: 20px; }
+  .btn.ghost { background: transparent; color: var(--brand); border: 1px solid var(--line); }
+  .btn.small { padding: 8px 12px; font-size: .9rem; }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .err { color: #b42318; background: #fdeceb; border-radius: 8px; padding: 10px 12px; margin-top: 14px; font-size: .94rem; }
+  .switch { text-align: center; margin-top: 16px; color: var(--muted); }
+  .switch button { background: none; border: 0; color: var(--brand); font-weight: 600; padding: 0; }
+  .row2 { display: grid; gap: 0 12px; grid-template-columns: 1fr; }
+  @media (min-width: 520px) { .row2 { grid-template-columns: 1fr 1fr; } }
+
+  /* App shell */
+  header.top { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  .top-in { max-width: 960px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .top-in .brand { margin: 0; font-size: 1.2rem; }
+  .spacer { flex: 1; }
+  .pill { font-size: .85rem; font-weight: 600; padding: 6px 10px; border-radius: 999px; background: var(--brand-soft); color: var(--brand); white-space: nowrap; }
+  .pill.expired { background: #fdeceb; color: #b42318; }
+  .pill.paid { background: #e5f4e8; color: var(--closed); }
+  nav.tabs { max-width: 960px; margin: 0 auto; padding: 0 12px; display: flex; gap: 4px; overflow-x: auto; }
+  nav.tabs button { background: none; border: 0; padding: 12px; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
+  nav.tabs button[aria-selected="true"] { color: var(--ink); border-color: var(--brand); }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .banner { background: #fff4e5; border: 1px solid #f3d29b; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; }
+  .banner.expired { background: #fdeceb; border-color: #f3b8b3; }
+
+  /* Leads */
+  .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+  .chip { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font-weight: 600; white-space: nowrap; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .lead { width: 100%; text-align: left; background: var(--card); border: 1px solid var(--line); border-left-width: 5px; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; display: block; }
+  .lead.Hot { border-left-color: var(--hot); } .lead.Warm { border-left-color: var(--warm); }
+  .lead.New { border-left-color: var(--new); } .lead.Closed { border-left-color: var(--closed); }
+  .lead-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .lead-name { font-weight: 600; }
+  .lead-meta { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+  .status { font-weight: 600; font-size: .85rem; }
+  .status.Hot { color: var(--hot); } .status.Warm { color: var(--warm); } .status.New { color: var(--new); } .status.Closed { color: var(--closed); }
+  .empty { text-align: center; color: var(--muted); padding: 36px 12px; }
+  .empty strong { display: block; color: var(--ink); font-family: var(--head); font-size: 1.15rem; margin-bottom: 6px; }
+
+  /* Conversation sheet */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(15,27,45,.45); z-index: 20; display: flex; align-items: flex-end; justify-content: center; }
+  .sheet { background: var(--card); width: 100%; max-width: 560px; max-height: 88vh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; }
+  .sheet-head { padding: 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+  .sheet-body { padding: 16px; overflow-y: auto; flex: 1; }
+  .sheet-foot { padding: 12px 16px; border-top: 1px solid var(--line); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .sheet-foot select { width: auto; }
+  .msg { max-width: 85%; padding: 9px 12px; border-radius: 12px; margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word; }
+  .msg.user { background: var(--brand-soft); margin-right: auto; }
+  .msg.assistant { background: #eef0f3; margin-left: auto; }
+
+  /* Listings + settings + live */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card h3 { font-size: 1.1rem; margin-bottom: 4px; }
+  .card p.hint { color: var(--muted); margin: 0 0 8px; font-size: .94rem; }
+  .prop { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+  .prop:first-child { border-top: 0; }
+  .prop b { display: block; }
+  .prop span { color: var(--muted); font-size: .92rem; }
+  .linkbtn { background: none; border: 0; color: #b42318; font-weight: 600; padding: 6px; }
+  code.box { display: block; background: #0f1b2d; color: #e8eefc; padding: 12px; border-radius: 8px; font-size: .85rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin: 8px 0; }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; z-index: 40; font-weight: 600; }
+  @media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(24px); opacity: .6; } } }
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<section id="auth" class="auth hidden">
+  <div class="auth-box">
+    <div class="brand">RealtyFlow</div>
+    <h1 id="authTitle">Never lose a buyer who messages after hours.</h1>
+    <p class="sub" id="authSub">Your AI assistant answers every enquiry, finds the serious buyers, and sends them to your WhatsApp. Free for 7 days.</p>
+    <div class="panel">
+      <form id="authForm" novalidate>
+        <div id="signupOnly">
+          <label for="business_name">Agency name</label>
+          <input id="business_name" autocomplete="organization" placeholder="e.g. KhashKads Housing Solutions">
+          <div class="row2">
+            <div><label for="agent_name">Your name</label><input id="agent_name" autocomplete="name"></div>
+            <div><label for="agent_whatsapp">WhatsApp number</label><input id="agent_whatsapp" inputmode="tel" placeholder="0803 123 4567"></div>
+          </div>
+          <label for="locations">Areas you sell in <small>(optional)</small></label>
+          <input id="locations" placeholder="Lekki, Ajah, Ikeja">
+        </div>
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email">
+        <label for="password">Password <small id="pwHint">(at least 8 characters)</small></label>
+        <input id="password" type="password" autocomplete="current-password">
+        <div id="authErr" class="err hidden" role="alert"></div>
+        <button class="btn block" id="authBtn" type="submit">Start my free 7 days</button>
+      </form>
+    </div>
+    <div class="switch" id="authSwitch"></div>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app" class="hidden">
+  <header class="top">
+    <div class="top-in">
+      <div class="brand">RealtyFlow</div>
+      <div class="spacer"></div>
+      <span id="acctPill" class="pill"></span>
+      <button class="btn ghost small" id="logoutBtn">Log out</button>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="leads" aria-selected="true">Leads</button>
+      <button role="tab" data-tab="listings" aria-selected="false">Listings</button>
+      <button role="tab" data-tab="live" aria-selected="false">Go live</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+    </nav>
+  </header>
+  <main>
+    <div id="banner"></div>
+    <div id="tab-leads"></div>
+    <div id="tab-listings" class="hidden"></div>
+    <div id="tab-live" class="hidden"></div>
+    <div id="tab-settings" class="hidden"></div>
+  </main>
+</section>
+
+<div id="sheetHost"></div>
+
+<script>
+// ---- Change this to your payment link or WhatsApp when Paystack is ready ----
+var UPGRADE_URL = 'https://wa.me/'; // TODO: put your number, e.g. https://wa.me/234XXXXXXXXXX
+
+var token = localStorage.getItem('rf_token');
+var me = null, leads = [], filter = 'All', timer = null, mode = 'signup';
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2200); }
+
+function api(method, url, body) {
+  return fetch(url, {
+    method: method,
+    headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { Authorization: 'Bearer ' + token } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (data) {
+      if (r.status === 401 && token) { logout(); }
+      if (!r.ok) throw new Error(data.error || 'Something went wrong. Try again.');
+      return data;
+    });
+  });
+}
+
+function ago(s) {
+  if (!s) return '';
+  var t = new Date(String(s).replace(' ', 'T') + 'Z').getTime();
+  var m = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+  var h = Math.round(m / 60); if (h < 24) return h + ' hr ago';
+  return Math.round(h / 24) + ' days ago';
+}
+
+/* ---------- AUTH ---------- */
+function setMode(m) {
+  mode = m;
+  var su = m === 'signup';
+  $('signupOnly').classList.toggle('hidden', !su);
+  $('authTitle').textContent = su ? 'Never lose a buyer who messages after hours.' : 'Welcome back';
+  $('authSub').classList.toggle('hidden', !su);
+  $('pwHint').classList.toggle('hidden', !su);
+  $('authBtn').textContent = su ? 'Start my free 7 days' : 'Log in';
+  $('password').autocomplete = su ? 'new-password' : 'current-password';
+  $('authSwitch').innerHTML = su
+    ? 'Already have an account? <button type="button" id="sw">Log in</button>'
+    : 'New here? <button type="button" id="sw">Create an account</button>';
+  $('sw').onclick = function () { setMode(su ? 'login' : 'signup'); };
+  $('authErr').classList.add('hidden');
+}
+$('authForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var btn = $('authBtn'); btn.disabled = true;
+  var body = { email: $('email').value, password: $('password').value };
+  if (mode === 'signup') {
+    ['business_name', 'agent_name', 'agent_whatsapp', 'locations'].forEach(function (k) { body[k] = $(k).value; });
+  }
+  api('POST', mode === 'signup' ? '/api/signup' : '/api/login', body)
+    .then(function (d) { token = d.token; localStorage.setItem('rf_token', token); return boot(mode === 'signup'); })
+    .catch(function (err) { $('authErr').textContent = err.message; $('authErr').classList.remove('hidden'); })
+    .then(function () { btn.disabled = false; });
+});
+function logout() {
+  token = null; localStorage.removeItem('rf_token'); clearInterval(timer);
+  $('app').classList.add('hidden'); $('auth').classList.remove('hidden'); setMode('login');
+}
+$('logoutBtn').onclick = logout;
+
+/* ---------- SHELL ---------- */
+function boot(firstTime) {
+  return api('GET', '/api/me').then(function (d) {
+    me = d;
+    $('auth').classList.add('hidden'); $('app').classList.remove('hidden');
+    renderHeader(); renderLive(); renderSettings(); loadListings();
+    return loadLeads().then(function () { showTab(firstTime ? 'listings' : 'leads'); });
+  });
+}
+function renderHeader() {
+  var a = me.account, pill = $('acctPill'), b = $('banner');
+  pill.className = 'pill'; b.innerHTML = '';
+  if (a.state === 'trial') {
+    pill.textContent = a.daysLeft + (a.daysLeft === 1 ? ' day' : ' days') + ' left in trial';
+    if (a.daysLeft <= 2) b.innerHTML = '<div class="banner">Your free trial ends soon. <a href="' + UPGRADE_URL + '" target="_blank" rel="noopener">Upgrade to keep your assistant running.</a></div>';
+  } else if (a.state === 'expired') {
+    pill.textContent = 'Trial ended'; pill.classList.add('expired');
+    b.innerHTML = '<div class="banner expired"><b>Your assistant is paused.</b> Visitors are being sent straight to your WhatsApp. <a href="' + UPGRADE_URL + '" target="_blank" rel="noopener">Upgrade to turn it back on.</a></div>';
+  } else if (a.state === 'paid') { pill.textContent = 'Plan active'; pill.classList.add('paid'); }
+  else pill.textContent = 'Active';
+}
+function showTab(name) {
+  ['leads', 'listings', 'live', 'settings'].forEach(function (t) { $('tab-' + t).classList.toggle('hidden', t !== name); });
+  document.querySelectorAll('nav.tabs button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false'); });
+  clearInterval(timer);
+  if (name === 'leads') timer = setInterval(loadLeads, 30000);
+}
+document.querySelectorAll('nav.tabs button').forEach(function (b) { b.onclick = function () { showTab(b.dataset.tab); }; });
+
+/* ---------- LEADS ---------- */
+function loadLeads() { return api('GET', '/api/me/leads').then(function (d) { leads = d; renderLeads(); }).catch(function () {}); }
+function renderLeads() {
+  var counts = { All: leads.length, Hot: 0, Warm: 0, New: 0, Closed: 0 };
+  leads.forEach(function (l) { var s = l.status || 'New'; counts[s] = (counts[s] || 0) + 1; });
+  var html = '<div class="chips">' + ['All', 'Hot', 'Warm', 'New', 'Closed'].map(function (f) {
+    return '<button class="chip" data-f="' + f + '" aria-pressed="' + (filter === f) + '">' + f + ' ' + (counts[f] || 0) + '</button>';
+  }).join('') + '</div>';
+  var list = leads.filter(function (l) { return filter === 'All' || (l.status || 'New') === filter; });
+  if (!list.length) {
+    html += leads.length
+      ? '<div class="empty"><strong>No ' + filter + ' leads</strong>Try another filter.</div>'
+      : '<div class="empty"><strong>No leads yet</strong>When someone chats with your assistant, they show up here. Open the Go live tab to get your chat link.</div>';
+  } else {
+    html += list.map(function (l) {
+      var s = l.status || 'New';
+      return '<button class="lead ' + s + '" data-id="' + esc(l.id) + '"><div class="lead-top"><span class="lead-name">' + esc(l.name || 'Unnamed visitor') +
+        '</span><span class="status ' + s + '">' + s + '</span></div><div class="lead-meta">' + esc(l.phone || 'No number yet') + ' · ' + ago(l.last_contacted_at) + '</div></button>';
+    }).join('');
+  }
+  $('tab-leads').innerHTML = html;
+  $('tab-leads').querySelectorAll('.chip').forEach(function (c) { c.onclick = function () { filter = c.dataset.f; renderLeads(); }; });
+  $('tab-leads').querySelectorAll('.lead').forEach(function (c) { c.onclick = function () { openLead(c.dataset.id); }; });
+}
+function openLead(id) {
+  var l = leads.filter(function (x) { return x.id === id; })[0]; if (!l) return;
+  var host = $('sheetHost');
+  host.innerHTML = '<div class="sheet-bg"><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-head"><div><h3>' + esc(l.name || 'Unnamed visitor') +
+    '</h3><div class="lead-meta">' + esc(l.phone || 'No number yet') + '</div></div><button class="btn ghost small" id="closeSheet">Close</button></div>' +
+    '<div class="sheet-body" id="msgs">Loading…</div><div class="sheet-foot"><select id="stSel" aria-label="Lead status">' +
+    ['New', 'Warm', 'Hot', 'Closed'].map(function (s) { return '<option' + ((l.status || 'New') === s ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
+    (l.phone ? '<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/' + esc(waDigits(l.phone)) + '">Message on WhatsApp</a>' : '') + '</div></div></div>';
+  $('closeSheet').onclick = function () { host.innerHTML = ''; };
+  host.firstChild.onclick = function (e) { if (e.target === host.firstChild) host.innerHTML = ''; };
+  $('stSel').onchange = function () {
+    api('PATCH', '/api/me/leads/' + encodeURIComponent(id), { status: this.value }).then(function () { toast('Status updated'); loadLeads(); }).catch(function (e) { toast(e.message); });
+  };
+  api('GET', '/api/me/leads/' + encodeURIComponent(id) + '/messages').then(function (ms) {
+    $('msgs').innerHTML = ms.length ? ms.map(function (m) { return '<div class="msg ' + (m.role === 'user' ? 'user' : 'assistant') + '">' + esc(m.content) + '</div>'; }).join('') : 'No messages.';
+  }).catch(function (e) { $('msgs').textContent = e.message; });
+}
+function waDigits(p) { var d = String(p).replace(/\D/g, ''); return (d.length === 11 && d[0] === '0') ? '234' + d.slice(1) : d; }
+
+/* ---------- LISTINGS ---------- */
+function loadListings() {
+  return api('GET', '/api/me/properties').then(renderListings).catch(function () {});
+}
+function renderListings(props) {
+  var html = '<div class="card"><h3>Add a listing</h3><p class="hint">Your assistant only talks about properties listed here.</p>' +
+    '<div class="row2"><div><label for="p_type">Type</label><input id="p_type" placeholder="3 bedroom flat"></div><div><label for="p_loc">Location</label><input id="p_loc" placeholder="Lekki Phase 1"></div></div>' +
+    '<div class="row2"><div><label for="p_price">Price (₦)</label><input id="p_price" inputmode="numeric" placeholder="85000000"></div><div><label for="p_notes">Notes <small>(optional)</small></label><input id="p_notes" placeholder="Fenced, 24hr power"></div></div>' +
+    '<div id="pErr" class="err hidden"></div><button class="btn block" id="addProp">Add listing</button></div>' +
+    '<div class="card"><h3>Paste many at once</h3><p class="hint">One listing per line: type | location | price | notes</p>' +
+    '<textarea id="bulk" placeholder="2 bedroom flat | Ajah | 45000000 | Newly built&#10;Land (600sqm) | Ibeju-Lekki | 12000000"></textarea><button class="btn ghost block" id="addBulk">Add all</button></div>' +
+    '<div class="card"><h3>Your listings (' + props.length + ')</h3>';
+  html += props.length ? props.map(function (p) {
+    return '<div class="prop"><div><b>' + esc(p.type) + ' · ' + esc(p.location) + '</b><span>' + (p.price_naira ? '₦' + Number(p.price_naira).toLocaleString() : 'Price on request') + (p.notes ? ' · ' + esc(p.notes) : '') + '</span></div><button class="linkbtn" data-rid="' + p.rid + '">Remove</button></div>';
+  }).join('') : '<div class="empty"><strong>No listings yet</strong>Add your first one above so your assistant has something to sell.</div>';
+  html += '</div>';
+  $('tab-listings').innerHTML = html;
+  $('addProp').onclick = function () {
+    api('POST', '/api/me/properties', { type: $('p_type').value, location: $('p_loc').value, price_naira: $('p_price').value, notes: $('p_notes').value })
+      .then(function () { toast('Listing added'); loadListings(); })
+      .catch(function (e) { $('pErr').textContent = e.message; $('pErr').classList.remove('hidden'); });
+  };
+  $('addBulk').onclick = function () {
+    var rows = $('bulk').value.split('\n').map(function (l) { return l.split('|').map(function (x) { return x.trim(); }); })
+      .filter(function (c) { return c[0] && c[1]; }).map(function (c) { return { type: c[0], location: c[1], price_naira: c[2] || '', notes: c[3] || '' }; });
+    if (!rows.length) return toast('Add at least one line');
+    api('POST', '/api/me/properties', { properties: rows }).then(function (d) { toast(d.inserted + ' listings added'); loadListings(); }).catch(function (e) { toast(e.message); });
+  };
+  $('tab-listings').querySelectorAll('.linkbtn').forEach(function (b) {
+    b.onclick = function () { api('DELETE', '/api/me/properties/' + b.dataset.rid).then(loadListings).catch(function (e) { toast(e.message); }); };
+  });
+}
+
+/* ---------- GO LIVE ---------- */
+function copy(text) { (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () { toast('Copied'); }).catch(function () { toast('Press and hold to copy'); }); }
+function renderLive() {
+  $('tab-live').innerHTML =
+    '<div class="card"><h3>Your chat link</h3><p class="hint">No website? Put this link in your Instagram bio, WhatsApp status and ads.</p><code class="box" id="cl">' + esc(me.chatLink) + '</code>' +
+    '<button class="btn small" id="copyCl">Copy link</button> <a class="btn ghost small" target="_blank" rel="noopener" href="' + esc(me.chatLink) + '">Try it yourself</a></div>' +
+    '<div class="card"><h3>Add it to your website</h3><p class="hint">Paste this once, just before the closing &lt;/body&gt; tag.</p><code class="box" id="sn">' + esc(me.widgetSnippet) + '</code><button class="btn small" id="copySn">Copy code</button></div>';
+  $('copyCl').onclick = function () { copy(me.chatLink); };
+  $('copySn').onclick = function () { copy(me.widgetSnippet); };
+}
+
+/* ---------- SETTINGS ---------- */
+function renderSettings() {
+  var t = me.tenant;
+  $('tab-settings').innerHTML = '<div class="card"><h3>Your agency</h3><p class="hint">This is how your assistant introduces itself and who it hands buyers to.</p>' +
+    '<label for="s_business">Agency name</label><input id="s_business" value="' + esc(t.business_name) + '">' +
+    '<div class="row2"><div><label for="s_agent">Agent name</label><input id="s_agent" value="' + esc(t.agent_name) + '"></div><div><label for="s_wa">WhatsApp number</label><input id="s_wa" inputmode="tel" value="' + esc(t.agent_whatsapp) + '"></div></div>' +
+    '<label for="s_loc">Areas you sell in</label><input id="s_loc" value="' + esc(t.locations) + '">' +
+    '<label for="s_spec">What you specialise in</label><input id="s_spec" value="' + esc(t.specialties) + '" placeholder="Luxury homes, land, short-lets">' +
+    '<label for="s_tone">How should it sound? <small>(optional)</small></label><textarea id="s_tone" placeholder="Friendly and professional. Keep replies short.">' + esc(t.tone_notes) + '</textarea>' +
+    '<div id="sErr" class="err hidden"></div><button class="btn block" id="saveSet">Save changes</button></div>';
+  $('saveSet').onclick = function () {
+    api('PUT', '/api/me/settings', { business_name: $('s_business').value, agent_name: $('s_agent').value, agent_whatsapp: $('s_wa').value, locations: $('s_loc').value, specialties: $('s_spec').value, tone_notes: $('s_tone').value })
+      .then(function () { toast('Saved'); return api('GET', '/api/me').then(function (d) { me = d; renderSettings(); }); })
+      .catch(function (e) { $('sErr').textContent = e.message; $('sErr').classList.remove('hidden'); });
+  };
+}
+
+/* ---------- START ---------- */
+if (token) { boot(false).catch(function () { logout(); }); }
+else { $('auth').classList.remove('hidden'); setMode('signup'); }
+</script>
+</body>
+</html>
