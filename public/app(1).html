@@ -286,7 +286,7 @@ function openLead(id) {
   var l = leads.filter(function (x) { return x.id === id; })[0]; if (!l) return;
   var host = $('sheetHost');
   host.innerHTML = '<div class="sheet-bg"><div class="sheet" role="dialog" aria-modal="true"><div class="sheet-head"><div><h3>' + esc(l.name || 'Unnamed visitor') +
-    '</h3><div class="lead-meta">' + esc(l.phone || 'No number yet') + '</div></div><button class="btn ghost small" id="closeSheet">Close</button></div>' +
+    '</h3><div class="lead-meta">' + esc(l.phone || 'No number yet') + (l.email ? ' · ' + esc(l.email) : '') + '</div></div><button class="btn ghost small" id="closeSheet">Close</button></div>' +
     '<div class="sheet-body" id="msgs">Loading…</div><div class="sheet-foot"><select id="stSel" aria-label="Lead status">' +
     ['New', 'Warm', 'Hot', 'Closed'].map(function (s) { return '<option' + ((l.status || 'New') === s ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select>' +
     (l.phone ? '<a class="btn small" target="_blank" rel="noopener" href="https://wa.me/' + esc(waDigits(l.phone)) + '">Message on WhatsApp</a>' : '') + '</div></div></div>';
