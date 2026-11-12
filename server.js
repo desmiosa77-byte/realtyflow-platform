@@ -37,6 +37,7 @@ addColumn('tenants', 'owner_id', 'TEXT');
 addColumn('tenants', 'trial_ends_at', 'TEXT');
 addColumn('tenants', 'plan', 'TEXT');
 addColumn('tenants', 'plan_expires_at', 'TEXT');
+addColumn('leads', 'email', 'TEXT');
 
 // ---------- AUTH HELPERS ----------
 function getSecret() {
@@ -153,6 +154,7 @@ Rules:
 - Answer property questions ONLY using the listings below. Never invent a property, price, or availability.
 - You cannot do physical things (inspections, key handovers, contracts). Be upfront about that.
 - Naturally, over the conversation, learn the lead's name and phone/WhatsApp number — don't demand it up front, just ask when it fits naturally.
+- Once you have their name and phone, ask ONCE, naturally, for their email so you can send them the property details. If they don't want to share it, don't push.
 - Keep replies short: 2-4 sentences, conversational.
 - When the lead is ready for a next step (viewing, payment, "yes let's do this"), tell them ${tenant.agent_name} will personally follow up, and keep it warm and short.
 
@@ -173,10 +175,14 @@ function classifyStatus(userMessage) {
 
 // Pull a name / Nigerian phone number out of what the lead typed
 const PHONE_RE = /(?:\+?234|0)[\s-]?[789][01]\d[\s-]?\d{3}[\s-]?\d{4}/;
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 const NAME_RE = /\b(?:my name is|my name's|call me|name:)\s+([A-Za-z][A-Za-z'-]{1,20}(?:\s+[A-Za-z][A-Za-z'-]{1,20})?)/i;
 function titleCase(s) { return s.replace(/\b\w/g, c => c.toUpperCase()); }
 function extractContact(text, hasName) {
   const out = {};
+  const e = text.match(EMAIL_RE);
+  if (e) out.email = e[0].toLowerCase();
+  text = text.replace(EMAIL_RE, ' ');
   const p = text.match(PHONE_RE);
   if (p) out.phone = p[0].replace(/[\s-]/g, '');
   const n = text.match(NAME_RE);
@@ -233,6 +239,25 @@ app.get('/c/:tenantId', (req, res) => {
   res.sendFile(path.resolve('public/chat.html'));
 });
 
+// ---------- ADMIN: activate or extend a paid plan (you use this after a client pays) ----------
+// Needs ADMIN_KEY set in Railway. Example:
+// /api/admin/activate?key=YOURKEY&tenantId=OYmIHJJ9&days=30&plan=growth
+app.get('/api/admin/activate', (req, res) => {
+  const key = process.env.ADMIN_KEY;
+  if (!key || (req.headers['x-admin-key'] || req.query.key) !== key) {
+    return res.status(401).json({ error: 'Admin key required' });
+  }
+  const t = getTenant(String(req.query.tenantId || ''));
+  if (!t) return res.status(404).json({ error: 'Unknown tenant' });
+  const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 400);
+  const plan = String(req.query.plan || 'growth').slice(0, 30);
+  const base = t.plan_expires_at && new Date(t.plan_expires_at).getTime() > Date.now()
+    ? new Date(t.plan_expires_at).getTime() : Date.now();
+  const expires = new Date(base + days * 86400000).toISOString();
+  db.prepare('UPDATE tenants SET plan = ?, plan_expires_at = ? WHERE id = ?').run(plan, expires, t.id);
+  res.json({ ok: true, tenant: t.business_name, plan, expires });
+});
+
 // ---------- CHAT (the widget calls this) ----------
 app.post('/api/chat', async (req, res) => {
   const { tenantId, leadId, message } = req.body;
@@ -263,9 +288,9 @@ app.post('/api/chat', async (req, res) => {
     // Save name / phone if the lead gave them
     const leadRow = db.prepare('SELECT name FROM leads WHERE id = ?').get(currentLeadId);
     const contact = extractContact(message, !!(leadRow && leadRow.name));
-    if (contact.name || contact.phone) {
-      db.prepare('UPDATE leads SET name = COALESCE(?, name), phone = COALESCE(?, phone) WHERE id = ?')
-        .run(contact.name || null, contact.phone || null, currentLeadId);
+    if (contact.name || contact.phone || contact.email) {
+      db.prepare('UPDATE leads SET name = COALESCE(?, name), phone = COALESCE(?, phone), email = COALESCE(?, email) WHERE id = ?')
+        .run(contact.name || null, contact.phone || null, contact.email || null, currentLeadId);
     }
 
     const history = db.prepare('SELECT role, content FROM messages WHERE lead_id = ? ORDER BY id ASC').all(currentLeadId);
@@ -439,4 +464,3 @@ app.patch('/api/me/leads/:id', requireAuth, (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`RealtyFlow platform running on http://localhost:${PORT}`));
-
